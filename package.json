@@ -1,11 +1,11 @@
 {
-  "name": "rclone-oauth-manager",
+  "name": "rclone-manager",
   "version": "1.0.0",
   "description": "Local rclone OAuth token manager for Google Drive and OneDrive.",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "check": "node --check src/index.js && node --check src/routes/oauth.js && node --check src/routes/configs.js && node --check src/routes/presets.js && node --check src/services/firebase.js && node --check src/services/tokenExchange.js && node --check src/services/tokenRefresh.js && node --check src/services/cloudApi.js && node --check src/utils/stateParser.js && node --check src/utils/configBuilder.js && node --check src/utils/encryption.js"
+    "check": "node --check src/index.js && node --check src/routes/oauth.js && node --check src/routes/configs.js && node --check src/routes/presets.js && node --check src/services/firebase.js && node --check src/services/tokenExchange.js && node --check src/services/tokenRefresh.js && node --check src/services/cloudApi.js && node --check src/utils/stateParser.js && node --check src/utils/configBuilder.js && node --check src/utils/encryption.js && node --check src/utils/oauthClients.js"
   },
   "keywords": [
     "rclone",

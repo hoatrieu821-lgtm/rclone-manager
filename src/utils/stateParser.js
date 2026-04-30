@@ -1,3 +1,5 @@
+const { sanitizeOAuthConfig } = require('./oauthClients');
+
 function decodeBase64Utf8(value) {
   return Buffer.from(String(value), 'base64').toString('utf8');
 }
@@ -47,7 +49,7 @@ function parseStateParam(state) {
     throw err;
   }
 
-  return {
+  return sanitizeOAuthConfig({
     clientId: String(payload.clientId),
     clientSecret: payload.clientSecret ? String(payload.clientSecret) : '',
     emailOwner: decodeEmail(payload.emailOwner),
@@ -57,7 +59,7 @@ function parseStateParam(state) {
     driveType: payload.driveType || 'personal',
     redirectUri: String(payload.redirectUri),
     nonce: String(payload.nonce),
-  };
+  });
 }
 
 module.exports = {

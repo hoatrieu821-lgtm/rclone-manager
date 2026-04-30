@@ -1,3 +1,5 @@
+const { assertOAuthClientSecret, sanitizeOAuthConfig } = require('../utils/oauthClients');
+
 async function postForm(url, params) {
   const response = await fetch(url, {
     method: 'POST',
@@ -13,6 +15,9 @@ async function postForm(url, params) {
 }
 
 async function exchangeOAuthCode(cfg, code) {
+  cfg = sanitizeOAuthConfig(cfg);
+  assertOAuthClientSecret(cfg);
+
   if (cfg.provider === 'gd') {
     return postForm('https://oauth2.googleapis.com/token', {
       code,

@@ -141,3 +141,9 @@ Nếu Docker báo lỗi kiểu `failed to read .env` hoặc `Incorrect function`
 Nếu `/health` trả `firebase: "error"` hoặc `firebaseMode: "offline"`, kiểm tra lại `.env`. App vẫn có thể chạy UI và manual flow, nhưng dữ liệu chỉ lưu memory nếu Firebase chưa cấu hình đúng.
 
 Nếu dùng service account file mode mà container báo không tìm thấy file, kiểm tra lại volume mount trong `docker-compose.yml` và giá trị `FIREBASE_SERVICE_ACCOUNT_PATH`.
+
+Nếu OneDrive báo `AADSTS7000215: Invalid client secret provided`:
+
+- Với preset `rclone (OneDrive)` / client id `b15665d9-eda6-4092-8539-0eec376afd59`, dùng client secret mặc định của rclone; app sẽ tự điền.
+- Với custom Azure app, vào **Certificates & secrets** và copy cột **Value** ngay lúc tạo secret; không copy **Secret ID**.
+- Nếu đã lưu nhầm preset, sửa preset đó rồi xóa giá trị secret sai trước khi auth lại.

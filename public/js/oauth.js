@@ -1,4 +1,8 @@
 (function () {
+  const RCLONE_ONEDRIVE_CLIENT_ID = 'b15665d9-eda6-4092-8539-0eec376afd59';
+  const RCLONE_ONEDRIVE_CLIENT_SECRET = 'qtyfaBBYA403=unZUP40~_#';
+  const AZURE_SECRET_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
   const BUILTIN_PRESETS = {
     gd: [
       {
@@ -12,10 +16,10 @@
     ],
     od: [
       {
-        label: 'rclone (OneDrive public)',
+        label: 'rclone (OneDrive)',
         provider: 'od',
-        clientId: 'b15665d9-eda6-4092-8539-0eec376afd59',
-        clientSecret: '',
+        clientId: RCLONE_ONEDRIVE_CLIENT_ID,
+        clientSecret: RCLONE_ONEDRIVE_CLIENT_SECRET,
         redirectUri: 'http://localhost:53682/',
         builtin: true,
       },
@@ -35,6 +39,25 @@
     return `${window.App.api.baseUrl}/`;
   }
 
+  function normalizedClientId(value) {
+    return String(value || '').trim().toLowerCase();
+  }
+
+  function isRcloneOneDrivePublicClient(cfg) {
+    return cfg.provider === 'od' && normalizedClientId(cfg.clientId) === RCLONE_ONEDRIVE_CLIENT_ID;
+  }
+
+  function sanitizeConfig(cfg) {
+    if (isRcloneOneDrivePublicClient(cfg)) {
+      return { ...cfg, clientSecret: RCLONE_ONEDRIVE_CLIENT_SECRET };
+    }
+    return cfg;
+  }
+
+  function looksLikeAzureSecretId(value) {
+    return AZURE_SECRET_ID_RE.test(String(value || '').trim());
+  }
+
   function b64Utf8(value) {
     return btoa(unescape(encodeURIComponent(value)));
   }
@@ -44,9 +67,10 @@
   }
 
   function buildStateParam(cfg, emailOwner) {
+    cfg = sanitizeConfig(cfg);
     const payload = {
       clientId: cfg.clientId,
-      clientSecret: cfg.clientSecret,
+      clientSecret: cfg.clientSecret || '',
       emailOwner: b64Utf8(emailOwner),
       provider: cfg.provider,
       remoteName: cfg.remoteName,
@@ -65,6 +89,7 @@
   }
 
   function buildAuthUrl(cfg, emailOwner) {
+    cfg = sanitizeConfig(cfg);
     const state = buildStateParam(cfg, emailOwner);
     sessionStorage.setItem('rstate', state);
     sessionStorage.setItem('rcfg', JSON.stringify({ ...cfg, emailOwner }));
@@ -188,16 +213,23 @@
   }
 
   function updateSecretRequired() {
-    const isOdPublic = provider === 'od' && !$('clientSecret').value.trim();
-    $('clientSecretRequired').classList.toggle('hidden', isOdPublic);
-    $('clientSecret').placeholder = isOdPublic ? 'Không cần cho OneDrive public client' : 'OAuth client secret';
+    const cfg = {
+      provider,
+      clientId: $('clientId').value.trim(),
+    };
+    const isRcloneOneDrive = isRcloneOneDrivePublicClient(cfg);
+    const isRequired = provider === 'gd' || (provider === 'od' && mode !== 'paste' && !isRcloneOneDrive);
+    $('clientSecretRequired').classList.toggle('hidden', !isRequired);
+    $('clientSecret').placeholder = isRcloneOneDrive
+      ? 'Dùng secret mặc định của rclone'
+      : 'OAuth client secret';
   }
 
   function getFormConfig() {
     const redirectUri = mode === 'auto'
       ? backendRedirectUri()
       : ($('customRedirectUri').value.trim() || 'http://localhost:53682/');
-    return {
+    return sanitizeConfig({
       clientId: $('clientId').value.trim(),
       clientSecret: $('clientSecret').value.trim(),
       remoteName: $('remoteName').value.trim() || 'myremote',
@@ -206,14 +238,17 @@
       provider,
       redirectUri,
       mode,
-    };
+    });
   }
 
   function validateConfig(cfg, emailOwner) {
     if (!emailOwner) return 'Nhập email owner.';
     if (!cfg.clientId) return 'Nhập Client ID.';
+    if (cfg.clientSecret && looksLikeAzureSecretId(cfg.clientSecret)) {
+      return 'Client Secret đang giống Azure Secret ID. Hãy copy cột Value trong Azure Certificates & secrets, không copy Secret ID.';
+    }
     if (cfg.provider === 'gd' && !cfg.clientSecret) return 'Google Drive cần Client Secret để exchange token.';
-    if (cfg.provider === 'od' && cfg.mode !== 'paste' && !cfg.clientSecret) return 'OneDrive auto flow nên dùng client secret.';
+    if (cfg.provider === 'od' && cfg.mode !== 'paste' && !cfg.clientSecret && !isRcloneOneDrivePublicClient(cfg)) return 'OneDrive auto flow nên dùng client secret.';
     return '';
   }
 
@@ -426,6 +461,7 @@
     });
     $('oauthPreset')?.addEventListener('change', applySelectedPreset);
     $('clientSecret')?.addEventListener('input', updateSecretRequired);
+    $('clientId')?.addEventListener('input', updateSecretRequired);
     $('reloadPresetsBtn')?.addEventListener('click', async () => {
       if (window.App.Credentials) await window.App.Credentials.loadPresets();
       renderPresetOptions();

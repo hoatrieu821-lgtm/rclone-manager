@@ -1,5 +1,6 @@
 const { buildRcloneConfig } = require('../utils/configBuilder');
 const { decryptIfConfigured } = require('../utils/encryption');
+const { assertOAuthClientSecret, sanitizeOAuthConfig } = require('../utils/oauthClients');
 
 async function postForm(url, params) {
   const response = await fetch(url, {
@@ -20,10 +21,11 @@ async function refreshAccessToken(record) {
     throw new Error('Config does not contain a refresh token.');
   }
 
-  const cfg = {
+  const cfg = sanitizeOAuthConfig({
     ...record,
     clientSecret: decryptIfConfigured(record.clientSecret || ''),
-  };
+  });
+  assertOAuthClientSecret(cfg);
 
   let token;
   if (record.provider === 'gd') {

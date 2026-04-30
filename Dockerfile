@@ -3,7 +3,9 @@ FROM node:20-alpine
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --omit=dev
+# This app only uses Firebase Realtime Database, so skip firebase-admin's
+# optional Firestore/Storage dependencies in the production image.
+RUN npm ci --omit=dev --omit=optional --no-audit --no-fund --loglevel=error --no-update-notifier
 
 COPY . .
 

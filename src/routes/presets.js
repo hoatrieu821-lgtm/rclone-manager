@@ -1,6 +1,7 @@
 const express = require('express');
 const firebase = require('../services/firebase');
 const { encryptIfConfigured, decryptIfConfigured } = require('../utils/encryption');
+const { assertOAuthClientSecret, sanitizeOAuthConfig } = require('../utils/oauthClients');
 
 const router = express.Router();
 const COLLECTION = 'credentials_presets';
@@ -15,14 +16,19 @@ function publicPreset(record) {
 
 function normalizePreset(body, existing = {}) {
   const now = Date.now();
-  return {
+  const preset = sanitizeOAuthConfig({
     label: body.label || existing.label || '',
     provider: body.provider || existing.provider || 'gd',
     clientId: body.clientId || existing.clientId || '',
-    clientSecret: encryptIfConfigured(body.clientSecret !== undefined ? body.clientSecret : decryptIfConfigured(existing.clientSecret || '')),
+    clientSecret: body.clientSecret !== undefined ? body.clientSecret : decryptIfConfigured(existing.clientSecret || ''),
     redirectUri: body.redirectUri || existing.redirectUri || 'http://localhost:53682/',
     createdAt: existing.createdAt || now,
     updatedAt: now,
+  });
+  assertOAuthClientSecret(preset);
+  return {
+    ...preset,
+    clientSecret: encryptIfConfigured(preset.clientSecret),
   };
 }
 

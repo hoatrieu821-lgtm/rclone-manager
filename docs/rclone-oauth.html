@@ -169,7 +169,7 @@ footer{text-align:center;color:var(--muted);font-size:.73rem;margin-top:32px;pad
       <div class="step"><div class="sn">5</div><div><strong>Certificates & secrets → New client secret</strong> → Copy secret <em>value</em> (không phải ID)</div></div>
     </div>
     <div id="g-od-paste" class="steps hidden">
-      <div class="step"><div class="sn">💡</div><div><strong>rclone built-in:</strong> OneDrive dùng public client, không cần client secret. Chọn preset để tự điền.</div></div>
+      <div class="step"><div class="sn">💡</div><div><strong>rclone built-in:</strong> OneDrive dùng client secret mặc định của rclone. Chọn preset để tự điền.</div></div>
       <div class="step"><div class="sn">1</div><div>Chọn preset <strong>rclone (OneDrive)</strong> bên dưới</div></div>
       <div class="step"><div class="sn">2</div><div>Click <strong>Generate Auth URL</strong> → mở link → đăng nhập Microsoft → redirect về <code>localhost:53682/...</code> (lỗi — bình thường)</div></div>
       <div class="step"><div class="sn">3</div><div>Copy toàn bộ URL từ address bar → paste vào ô bên dưới</div></div>
@@ -317,7 +317,7 @@ footer{text-align:center;color:var(--muted);font-size:.73rem;margin-top:32px;pad
 // ─── State ─────────────────────────────────────────────────────────────────
 let mode = 'auto', provider = 'gd', authUrl = '';
 
-// rclone built-in presets (public client IDs from rclone open source)
+// rclone built-in presets from rclone open source
 const PRESETS = {
   gd: [
     { label: 'Custom App', id:'', secret:'', rd:null },
@@ -325,11 +325,11 @@ const PRESETS = {
   ],
   od: [
     { label: 'Custom App', id:'', secret:'', rd:null },
-    { label: 'rclone (OneDrive)', id:'b15665d9-eda6-4092-8539-0eec376afd59', secret:'', rd:'http://localhost:53682/' }
+    { label: 'rclone (OneDrive)', id:'b15665d9-eda6-4092-8539-0eec376afd59', secret:'qtyfaBBYA403=unZUP40~_#', rd:'http://localhost:53682/' }
   ]
 };
 // Note: rclone GDrive secret is obfuscated in binary. For paste mode we use PKCE alternative or user provides it.
-// OneDrive rclone client is a public client - doesn't need secret.
+// OneDrive rclone client uses the default rclone secret from rclone source.
 
 // ─── URI helpers ───────────────────────────────────────────────────────────
 function getPageUri() {
@@ -374,7 +374,7 @@ function updateModeUI() {
   document.getElementById('btnIcon').textContent = isAuto ? '🚀' : '🔗';
   document.getElementById('btnLabel').textContent = isAuto ? 'Authorize →' : 'Generate Auth URL →';
 
-  // OneDrive rclone = public client (no secret needed in paste mode)
+  // OneDrive rclone uses the default rclone secret.
   updateSecretRequired();
 }
 
@@ -382,7 +382,7 @@ function updateSecretRequired() {
   const preset = getCurrentPreset();
   const isOdRclone = provider === 'od' && preset && preset.label.includes('rclone');
   document.getElementById('secretReq').classList.toggle('hidden', isOdRclone);
-  document.getElementById('clientSecret').placeholder = isOdRclone ? '(Không cần cho OneDrive public client)' : 'Client Secret';
+  document.getElementById('clientSecret').placeholder = isOdRclone ? '(Dùng secret mặc định của rclone)' : 'Client Secret';
 }
 
 // ─── Presets ───────────────────────────────────────────────────────────────
@@ -429,8 +429,7 @@ function step1Action() {
 
   if (!clientId) { toast('⚠️ Nhập Client ID!', true); return; }
 
-  const isOdPublic = provider === 'od' && !clientSecret;
-  if (!isOdPublic && !clientSecret) { toast('⚠️ Nhập Client Secret! (OneDrive rclone preset không cần nếu là public client)', true); return; }
+  if (!clientSecret) { toast('⚠️ Nhập Client Secret!', true); return; }
 
   const cfg = {
     clientId, clientSecret,

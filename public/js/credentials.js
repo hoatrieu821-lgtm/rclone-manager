@@ -1,5 +1,8 @@
 (function () {
   const CACHE_KEY = 'credentials-presets-cache';
+  const RCLONE_ONEDRIVE_CLIENT_ID = 'b15665d9-eda6-4092-8539-0eec376afd59';
+  const RCLONE_ONEDRIVE_CLIENT_SECRET = 'qtyfaBBYA403=unZUP40~_#';
+  const AZURE_SECRET_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   const revealedSecrets = new Set();
 
   function $(id) {
@@ -8,6 +11,18 @@
 
   function providerLabel(provider) {
     return provider === 'gd' ? 'Google Drive' : 'OneDrive';
+  }
+
+  function normalizeClientId(value) {
+    return String(value || '').trim().toLowerCase();
+  }
+
+  function isRcloneOneDrivePublicClient(preset) {
+    return preset.provider === 'od' && normalizeClientId(preset.clientId) === RCLONE_ONEDRIVE_CLIENT_ID;
+  }
+
+  function looksLikeAzureSecretId(value) {
+    return AZURE_SECRET_ID_RE.test(String(value || '').trim());
   }
 
   function cachePresets(items) {
@@ -102,7 +117,7 @@
   async function submitPreset(event) {
     event.preventDefault();
     const id = $('credentialId').value;
-    const payload = {
+    let payload = {
       label: $('credentialLabel').value.trim(),
       provider: $('credentialProvider').value,
       clientId: $('credentialClientId').value.trim(),
@@ -111,6 +126,12 @@
     };
     if (!payload.label || !payload.clientId) {
       window.App.utils.toast('Label và Client ID là bắt buộc.', true);
+      return;
+    }
+    if (isRcloneOneDrivePublicClient(payload)) {
+      payload = { ...payload, clientSecret: RCLONE_ONEDRIVE_CLIENT_SECRET };
+    } else if (payload.clientSecret && looksLikeAzureSecretId(payload.clientSecret)) {
+      window.App.utils.toast('Client Secret đang giống Azure Secret ID. Hãy copy cột Value trong Azure Certificates & secrets.', true);
       return;
     }
 

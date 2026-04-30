@@ -1,3 +1,5 @@
+const { sanitizeOAuthConfig } = require('./oauthClients');
+
 function toExpiry(expiresIn) {
   return new Date(Date.now() + Number(expiresIn || 3600) * 1000).toISOString();
 }
@@ -13,6 +15,7 @@ function buildTokenJson(token, existingRefreshToken) {
 }
 
 function buildRcloneConfig(cfg, token, existingRefreshToken = '') {
+  cfg = sanitizeOAuthConfig(cfg);
   const tokenJson = buildTokenJson(token, existingRefreshToken);
   const tokenText = JSON.stringify(tokenJson);
 
@@ -48,6 +51,7 @@ function buildRcloneConfig(cfg, token, existingRefreshToken = '') {
 }
 
 function normalizeConfigRecord(cfg, token, options = {}) {
+  cfg = sanitizeOAuthConfig(cfg);
   const built = options.rcloneConfig
     ? {
       expiry: options.expiry || token.expiry || toExpiry(token.expires_in),

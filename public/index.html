@@ -134,10 +134,10 @@
                     <div class="guide-item"><span class="guide-item__index">1</span><div>Azure Portal → App registrations → New registration.</div></div>
                     <div class="guide-item"><span class="guide-item__index">2</span><div>Redirect URI platform Web: <code class="js-redirect-uri">http://localhost:53682/</code></div></div>
                     <div class="guide-item"><span class="guide-item__index">3</span><div>Delegated permissions: Files.ReadWrite và offline_access.</div></div>
-                    <div class="guide-item"><span class="guide-item__index">4</span><div>Tạo client secret và copy secret value.</div></div>
+                    <div class="guide-item"><span class="guide-item__index">4</span><div>Tạo client secret và copy cột Value, không copy Secret ID.</div></div>
                   </div>
                   <div class="guide-list hidden" id="guideOdPaste">
-                    <div class="guide-item"><span class="guide-item__index">1</span><div>OneDrive public client có thể dùng không cần client secret.</div></div>
+                    <div class="guide-item"><span class="guide-item__index">1</span><div>Preset rclone OneDrive tự điền client secret mặc định.</div></div>
                     <div class="guide-item"><span class="guide-item__index">2</span><div>Mở auth URL, đăng nhập Microsoft, rồi copy URL redirect về localhost.</div></div>
                     <div class="guide-item"><span class="guide-item__index">3</span><div>Paste URL để exchange token và tạo block rclone.conf.</div></div>
                   </div>
@@ -476,14 +476,14 @@
 
   <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>
 
-  <script src="/js/api.js" defer></script>
-  <script src="/js/theme.js" defer></script>
-  <script src="/js/sidebar.js" defer></script>
-  <script src="/js/firebase-client.js" defer></script>
-  <script src="/js/oauth.js" defer></script>
-  <script src="/js/credentials.js" defer></script>
-  <script src="/js/configs.js" defer></script>
-  <script src="/js/manager.js" defer></script>
-  <script src="/js/main.js" defer></script>
+  <script src="/js/api.js?v=20260430-3" defer></script>
+  <script src="/js/theme.js?v=20260430-3" defer></script>
+  <script src="/js/sidebar.js?v=20260430-3" defer></script>
+  <script src="/js/firebase-client.js?v=20260430-3" defer></script>
+  <script src="/js/oauth.js?v=20260430-3" defer></script>
+  <script src="/js/credentials.js?v=20260430-3" defer></script>
+  <script src="/js/configs.js?v=20260430-3" defer></script>
+  <script src="/js/manager.js?v=20260430-3" defer></script>
+  <script src="/js/main.js?v=20260430-3" defer></script>
 </body>
 </html>
