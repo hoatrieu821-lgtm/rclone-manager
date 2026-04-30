@@ -1,0 +1,26 @@
+{
+  "name": "rclone-oauth-manager",
+  "version": "1.0.0",
+  "description": "Local rclone OAuth token manager for Google Drive and OneDrive.",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "check": "node --check src/index.js && node --check src/routes/oauth.js && node --check src/routes/configs.js && node --check src/routes/presets.js && node --check src/services/firebase.js && node --check src/services/tokenExchange.js && node --check src/services/tokenRefresh.js && node --check src/services/cloudApi.js && node --check src/utils/stateParser.js && node --check src/utils/configBuilder.js && node --check src/utils/encryption.js"
+  },
+  "keywords": [
+    "rclone",
+    "oauth",
+    "google-drive",
+    "onedrive"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "firebase-admin": "^13.0.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

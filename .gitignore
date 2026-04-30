@@ -5,7 +5,6 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 .pnpm-store/
-package-lock.json
 yarn.lock
 pnpm-lock.yaml
 
@@ -70,6 +69,7 @@ TestResults/
 .env.development
 .env.production
 .env.test
+serviceAccount.json
 appsettings.Development.json
 appsettings.Local.json
 secrets.json

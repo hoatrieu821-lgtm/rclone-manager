@@ -1,0 +1,22 @@
+services:
+  rclone-oauth:
+    build: .
+    container_name: rclone-oauth-manager
+    ports:
+      - "53682:53682"
+    env_file:
+      - .env
+    environment:
+      PORT: 53682
+      FRONTEND_URL: http://localhost:53682
+    # If you use service account file mode, set:
+    # FIREBASE_SERVICE_ACCOUNT_PATH=/run/secrets/firebase_service_account
+    # in .env and uncomment this volume.
+    # volumes:
+    #   - ./serviceAccount.json:/run/secrets/firebase_service_account:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:53682/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

@@ -1,12 +1,14 @@
 # PROMPT: Build rclone OAuth Manager App
 
 ## OVERVIEW
+
 Xây dựng web app quản lý rclone OAuth token cho Google Drive và OneDrive.
 App chạy độc lập (Node.js/Python) hoặc Docker. Có frontend PWA + backend HTTP tại `http://localhost:53682/`.
 
 ---
 
 ## TECH STACK
+
 - **Backend**: Node.js (Express) hoặc Python (FastAPI) — chọn 1
 - **Frontend**: Vanilla HTML/CSS/JS — single page app, file structure theo `design_html.md` Section 12
 - **Database**: Firebase Realtime Database (hỗ trợ 2 auth mode: service account JSON hoặc database secret trong URL)
@@ -19,12 +21,15 @@ App chạy độc lập (Node.js/Python) hoặc Docker. Có frontend PWA + backe
 Backend lắng nghe đúng endpoint này để nhận OAuth callback từ Google/Microsoft.
 
 ### Endpoint chính:
+
 ```
 GET /?code=...&state=...   ← OAuth callback
 ```
 
 ### Xử lý state parameter:
+
 Auth URL được frontend nhúng vào `state` field dữ liệu base64-encoded JSON:
+
 ```json
 {
   "clientId": "...",
@@ -37,15 +42,18 @@ Auth URL được frontend nhúng vào `state` field dữ liệu base64-encoded 
   "redirectUri": "http://localhost:53682/"
 }
 ```
+
 > `emailOwner` được double base64: `btoa(btoa("user@gmail.com"))` để tránh ký tự đặc biệt trong URL.
 
 Backend decode state → exchange code → build rclone config → lưu Firebase.
 
 ### Token exchange:
+
 - **Google Drive**: `POST https://oauth2.googleapis.com/token`
 - **OneDrive**: `POST https://login.microsoftonline.com/common/oauth2/v2.0/token`
 
 ### Sau khi exchange thành công:
+
 1. Build rclone config string
 2. Lưu vào Firebase Realtime Database (xem schema bên dưới)
 3. Redirect về frontend: `/?saved=true&remote=<remoteName>`
@@ -90,6 +98,7 @@ Backend decode state → exchange code → build rclone config → lưu Firebase
 ```
 
 ### Firebase Indexes (khai báo trong Security Rules):
+
 ```json
 {
   "rules": {
@@ -104,6 +113,7 @@ Backend decode state → exchange code → build rclone config → lưu Firebase
 ```
 
 ### Firebase Auth config (env — chọn 1 trong 2 mode):
+
 ```env
 # Mode 1: Service Account JSON
 FIREBASE_SERVICE_ACCOUNT_PATH=./serviceAccount.json
@@ -114,6 +124,7 @@ FIREBASE_SERVICE_ACCOUNT_JSON={"type":"service_account",...}
 FIREBASE_DATABASE_URL=https://xxx.firebaseio.com
 FIREBASE_DATABASE_SECRET=your_secret_here
 ```
+
 Backend tự detect mode dựa trên env vars có mặt.
 
 ---
@@ -121,6 +132,7 @@ Backend tự detect mode dựa trên env vars có mặt.
 ## FRONTEND — Cấu trúc & UX
 
 ### Bắt buộc tuân thủ `design_html.md`:
+
 - **PWA**: `manifest.json` + `sw.js` (cache static assets)
 - **CSS Design Tokens**: toàn bộ màu khai báo trong `:root` và `[data-theme="dark"]`, **KHÔNG hardcode màu trực tiếp**
 - **Layout**: Sidebar fixed left (collapsed/expanded) + main content + footer fixed bottom
@@ -130,19 +142,21 @@ Backend tự detect mode dựa trên env vars có mặt.
 - **Accessibility**: `aria-label` cho icon-only buttons, `aria-current="page"` cho nav active, contrast ≥ 4.5:1
 
 ### Sidebar navigation (5 sections):
-| # | Icon | Label | Chức năng |
-|---|------|-------|-----------|
-| 1 | 🔐 | OAuth Auth | Tạo config mới |
-| 2 | ⚙️ | Credentials | Quản lý preset clientId/secret |
-| 3 | 📋 | Configs | Danh sách config đã lưu |
-| 4 | 📊 | Manager | Kiểm tra trạng thái, quota, files |
-| 5 | 🛠️ | Settings | Cấu hình Firebase, app |
+
+| #   | Icon | Label       | Chức năng                         |
+| --- | ---- | ----------- | --------------------------------- |
+| 1   | 🔐   | OAuth Auth  | Tạo config mới                    |
+| 2   | ⚙️   | Credentials | Quản lý preset clientId/secret    |
+| 3   | 📋   | Configs     | Danh sách config đã lưu           |
+| 4   | 📊   | Manager     | Kiểm tra trạng thái, quota, files |
+| 5   | 🛠️   | Settings    | Cấu hình Firebase, app            |
 
 ---
 
 ## SECTION 1: OAuth Auth Flow
 
 **Giữ nguyên toàn bộ logic và UI từ file `rclone-oauth.html` được cung cấp**, bao gồm:
+
 - Flow steps indicator: ① Chọn flow → ② Cấu hình → ③ Authorize → ④ Lấy token → ⑤ Config
 - 2 mode: **Auto Redirect** và **Paste Redirect URL**
 - 2 provider: **Google Drive** và **OneDrive**
@@ -150,7 +164,9 @@ Backend tự detect mode dựa trên env vars có mặt.
 - Trường nhập `emailOwner` (email tài khoản dùng để auth)
 
 ### Thay đổi duy nhất — hàm buildAuthUrl():
+
 Nhúng metadata vào `state` param dưới dạng base64 JSON:
+
 ```javascript
 function buildStateParam(cfg, emailOwner) {
   const payload = {
@@ -162,7 +178,7 @@ function buildStateParam(cfg, emailOwner) {
     scope: cfg.scope,
     driveType: cfg.driveType,
     redirectUri: cfg.redirectUri,
-    nonce: Math.random().toString(36).slice(2)
+    nonce: Math.random().toString(36).slice(2),
   };
   return btoa(JSON.stringify(payload));
 }
@@ -170,12 +186,13 @@ function buildStateParam(cfg, emailOwner) {
 ```
 
 ### Fallback manual — PHẢI giữ nguyên hoàn toàn:
+
 - Paste URL flow hoạt động 100% không cần backend
 - Sau khi exchange token ở frontend thành công:
   - Hiển thị config text
   - Nút **"📋 Copy config"**
   - Nút **"☁️ Save to Firebase"** → gọi `POST /api/configs/save`
-- Hiển thị warning banner nếu backend offline: *"⚠️ Backend offline — đang chạy chế độ thủ công"*
+- Hiển thị warning banner nếu backend offline: _"⚠️ Backend offline — đang chạy chế độ thủ công"_
 - Kiểm tra backend: `GET /health` khi load trang, timeout 2s
 
 ---
@@ -214,18 +231,21 @@ function buildStateParam(cfg, emailOwner) {
 Với mỗi config được chọn, gọi API qua access token:
 
 ### Google Drive:
+
 ```
 GET https://www.googleapis.com/drive/v3/about?fields=storageQuota,user
 GET https://www.googleapis.com/drive/v3/files?pageSize=20&fields=files(id,name,size,mimeType,modifiedTime)
 ```
 
 ### OneDrive:
+
 ```
 GET https://graph.microsoft.com/v1.0/me/drive
 GET https://graph.microsoft.com/v1.0/me/drive/root/children?$select=id,name,size,file,lastModifiedDateTime
 ```
 
 **UI hiển thị:**
+
 - Dropdown chọn config (load từ Configs list)
 - Storage progress bar: `used / total` với % và bytes formatted
 - Status badge: `Active` / `Expired` / `Error`
@@ -406,5 +426,5 @@ project/
 
 Agent phải đọc 2 file sau trước khi code:
 
-- `rclone-oauth.html` — giao diện và logic OAuth flow gốc (giữ nguyên, chỉ sửa buildAuthUrl)
+- `rclone-oauth.html` — giao diện và logic OAuth flow gốc (giữ nguyên logic hoạt động, chỉ sửa buildAuthUrl), thiết kế lại, tuân thủ `design_html.md`.
 - `design_html.md` — design system bắt buộc (tokens, layout, PWA, accessibility)
