@@ -39,6 +39,7 @@
         <li><a href="#credentials" class="sidebar__link" data-route="credentials" data-tooltip="Credentials"><span class="sidebar__link-icon" aria-hidden="true">⚙️</span><span class="sidebar__link-label">Credentials</span></a></li>
         <li><a href="#configs" class="sidebar__link" data-route="configs" data-tooltip="Configs"><span class="sidebar__link-icon" aria-hidden="true">📋</span><span class="sidebar__link-label">Configs</span></a></li>
         <li><a href="#manager" class="sidebar__link" data-route="manager" data-tooltip="Manager"><span class="sidebar__link-icon" aria-hidden="true">📊</span><span class="sidebar__link-label">Manager</span></a></li>
+        <li><a href="#rclone" class="sidebar__link" data-route="rclone" data-tooltip="Rclone commands"><span class="sidebar__link-icon" aria-hidden="true">⌘</span><span class="sidebar__link-label">Rclone commands</span></a></li>
         <li><a href="#settings" class="sidebar__link" data-route="settings" data-tooltip="Settings"><span class="sidebar__link-icon" aria-hidden="true">🛠️</span><span class="sidebar__link-label">Settings</span></a></li>
       </ul>
     </nav>
@@ -382,6 +383,136 @@
         </div>
       </section>
 
+      <section id="section-rclone" class="section" aria-labelledby="rcloneTitle">
+        <div class="page-header">
+          <div class="page-header__copy">
+            <span class="badge badge--purple">Rclone commands</span>
+            <h1 id="rcloneTitle">Chạy lệnh rclone</h1>
+          </div>
+          <div class="inline">
+            <button type="button" class="btn btn--secondary" id="rcloneReloadBtn">↻ Reload</button>
+            <button type="button" class="btn btn--primary" id="rcloneRunBtn">▶ Run</button>
+          </div>
+        </div>
+        <div class="stack">
+          <div class="grid grid--2">
+            <div class="panel">
+              <div class="panel__header"><h2 class="h4">Builder</h2></div>
+              <div class="panel__body stack">
+                <div class="grid grid--2">
+                  <div class="form-field">
+                    <label class="label" for="rcloneSourceConfigSelect">Source config</label>
+                    <select class="select" id="rcloneSourceConfigSelect"></select>
+                  </div>
+                  <div class="form-field">
+                    <label class="label" for="rcloneTargetConfigSelect">Target config</label>
+                    <select class="select" id="rcloneTargetConfigSelect"></select>
+                  </div>
+                </div>
+                <div class="grid grid--2">
+                  <div class="form-field">
+                    <label class="label" for="rcloneSourcePath">Source path</label>
+                    <input class="input" id="rcloneSourcePath" placeholder="folder/subfolder" />
+                  </div>
+                  <div class="form-field">
+                    <label class="label" for="rcloneTargetPath">Target path</label>
+                    <input class="input" id="rcloneTargetPath" placeholder="backup/folder" />
+                  </div>
+                </div>
+                <div class="grid grid--2">
+                  <div class="form-field">
+                    <label class="label" for="rclonePreset">Command preset</label>
+                    <select class="select" id="rclonePreset">
+                      <option value="lsd">lsd source:</option>
+                      <option value="lsjson">lsjson source:path</option>
+                      <option value="size_json">size source:path --json</option>
+                      <option value="about_json">about source: --json</option>
+                      <option value="tree">tree source:path</option>
+                      <option value="copy">copy source:path target:path</option>
+                      <option value="sync">sync source:path target:path</option>
+                      <option value="move">move source:path target:path</option>
+                      <option value="check">check source:path target:path</option>
+                    </select>
+                  </div>
+                  <div class="form-field">
+                    <label class="label" for="rcloneOutputMode">Output</label>
+                    <select class="select" id="rcloneOutputMode">
+                      <option value="raw">Raw</option>
+                      <option value="json">JSON</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-field">
+                  <label class="label" for="rcloneTimeoutSeconds">Timeout seconds</label>
+                  <input class="input" type="number" id="rcloneTimeoutSeconds" min="1" max="900" value="900" />
+                </div>
+                <label class="inline rclone-checkbox">
+                  <input type="checkbox" id="rcloneDryRun" checked />
+                  <span>Dry run cho copy/sync/move</span>
+                </label>
+                <label class="inline rclone-checkbox">
+                  <input type="checkbox" id="rcloneExcludePersonalVault" checked />
+                  <span>Exclude OneDrive Personal Vault</span>
+                </label>
+                <div class="inline">
+                  <button type="button" class="btn btn--secondary" id="rcloneBuildBtn">Build command</button>
+                  <button type="button" class="btn btn--secondary" id="rcloneCopyCommandBtn">Copy command</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel__header"><h2 class="h4">Saved commands</h2></div>
+              <div class="panel__body stack">
+                <div class="grid grid--2">
+                  <div class="form-field">
+                    <label class="label" for="rcloneSaveName">Name</label>
+                    <input class="input" id="rcloneSaveName" placeholder="daily dry-run sync" />
+                  </div>
+                  <div class="form-field">
+                    <label class="label" for="rcloneSavedCommandSelect">Load saved</label>
+                    <select class="select" id="rcloneSavedCommandSelect"></select>
+                  </div>
+                </div>
+                <div class="inline">
+                  <button type="button" class="btn btn--secondary" id="rcloneLoadSavedBtn">Load</button>
+                  <button type="button" class="btn btn--primary" id="rcloneSaveCommandBtn">Save command</button>
+                  <button type="button" class="btn btn--danger" id="rcloneDeleteSavedBtn">Delete</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel__header"><h2 class="h4">Command</h2></div>
+            <div class="panel__body stack">
+              <textarea class="textarea textarea--mono" id="rcloneCommandInput" rows="3" placeholder="rclone lsjson remote:path"></textarea>
+              <div class="inline">
+                <button type="button" class="btn btn--primary" id="rcloneRunInlineBtn">▶ Run</button>
+                <span class="text-secondary" id="rcloneRunStatus">Idle</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel__header">
+              <h2 class="h4">Result</h2>
+              <span class="text-secondary" id="rcloneResultMeta">No run yet</span>
+            </div>
+            <div class="panel__body stack">
+              <div>
+                <label class="label" for="rcloneStdout">stdout</label>
+                <div class="codeout" id="rcloneStdout"></div>
+              </div>
+              <div>
+                <label class="label" for="rcloneStderr">stderr</label>
+                <div class="codeout codeout--muted" id="rcloneStderr"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section id="section-settings" class="section" aria-labelledby="settingsTitle">
         <div class="page-header">
           <div class="page-header__copy">
@@ -402,6 +533,8 @@
             <div class="panel__header"><h2 class="h4">App info</h2></div>
             <div class="panel__body stack">
               <div class="metric"><span class="metric__label">Version</span><span class="metric__value" id="settingsVersion">-</span></div>
+              <div class="metric"><span class="metric__label">Runner commit</span><span class="metric__value" id="settingsRunnerCommit">-</span></div>
+              <div class="metric"><span class="metric__label">Runner commit at</span><span class="metric__value" id="settingsRunnerCommitAt">-</span></div>
               <div class="metric"><span class="metric__label">Backend URL</span><span class="metric__value" id="settingsBackendUrl">-</span></div>
               <div class="metric"><span class="metric__label">Backend status</span><span class="metric__value" id="settingsBackendStatus">-</span></div>
               <div class="inline">
@@ -420,6 +553,7 @@
     <a href="#credentials" class="bottom-nav__item" data-route="credentials"><span class="bottom-nav__icon" aria-hidden="true">⚙️</span><span>Creds</span></a>
     <a href="#configs" class="bottom-nav__item" data-route="configs"><span class="bottom-nav__icon" aria-hidden="true">📋</span><span>Configs</span></a>
     <a href="#manager" class="bottom-nav__item" data-route="manager"><span class="bottom-nav__icon" aria-hidden="true">📊</span><span>Manage</span></a>
+    <a href="#rclone" class="bottom-nav__item" data-route="rclone"><span class="bottom-nav__icon" aria-hidden="true">⌘</span><span>Rclone</span></a>
     <a href="#settings" class="bottom-nav__item" data-route="settings"><span class="bottom-nav__icon" aria-hidden="true">🛠️</span><span>Settings</span></a>
   </nav>
 
@@ -476,14 +610,15 @@
 
   <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>
 
-  <script src="/js/api.js?v=20260430-3" defer></script>
-  <script src="/js/theme.js?v=20260430-3" defer></script>
-  <script src="/js/sidebar.js?v=20260430-3" defer></script>
-  <script src="/js/firebase-client.js?v=20260430-3" defer></script>
-  <script src="/js/oauth.js?v=20260430-3" defer></script>
-  <script src="/js/credentials.js?v=20260430-3" defer></script>
-  <script src="/js/configs.js?v=20260430-3" defer></script>
-  <script src="/js/manager.js?v=20260430-3" defer></script>
-  <script src="/js/main.js?v=20260430-3" defer></script>
+  <script src="/js/api.js?v=20260430-5" defer></script>
+  <script src="/js/theme.js?v=20260430-5" defer></script>
+  <script src="/js/sidebar.js?v=20260430-5" defer></script>
+  <script src="/js/firebase-client.js?v=20260430-5" defer></script>
+  <script src="/js/oauth.js?v=20260430-5" defer></script>
+  <script src="/js/credentials.js?v=20260430-5" defer></script>
+  <script src="/js/configs.js?v=20260430-5" defer></script>
+  <script src="/js/manager.js?v=20260430-5" defer></script>
+  <script src="/js/rcloneCommands.js?v=20260430-5" defer></script>
+  <script src="/js/main.js?v=20260430-5" defer></script>
 </body>
 </html>

@@ -3,6 +3,7 @@ const admin = require('firebase-admin');
 
 const memoryDb = {
   rclone_configs: {},
+  rclone_commands: {},
   credentials_presets: {},
   app_config: {},
 };

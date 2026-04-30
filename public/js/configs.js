@@ -53,6 +53,7 @@
       renderConfigsTable();
       renderPagination();
       if (window.App.Manager) window.App.Manager.refreshOptions();
+      if (window.App.RcloneCommands) window.App.RcloneCommands.refreshOptions();
     } catch (err) {
       window.App.utils.toast(`Không tải được configs: ${err.message}`, true);
     }

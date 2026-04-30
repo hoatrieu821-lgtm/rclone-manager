@@ -373,10 +373,28 @@
       }
 
       if (data.error) throw new Error(`${data.error}: ${data.error_description || ''}`);
+      if (cfg.provider === 'od' && data.access_token) {
+        cfg = {
+          ...cfg,
+          driveId: await fetchOneDriveDriveId(data.access_token),
+        };
+      }
       buildConfig(data, cfg);
     } catch (err) {
       showErr(err.message);
     }
+  }
+
+  async function fetchOneDriveDriveId(accessToken) {
+    const response = await fetch('https://graph.microsoft.com/v1.0/me/drive', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const detail = data.error && data.error.message ? data.error.message : response.statusText;
+      throw new Error(`Không lấy được OneDrive drive_id: ${detail}`);
+    }
+    return data.id || '';
   }
 
   function buildConfig(token, cfg) {
@@ -403,6 +421,7 @@
         `client_id = ${cfg.clientId}`,
         cfg.clientSecret ? `client_secret = ${cfg.clientSecret}` : '',
         `token = ${tokenJson}`,
+        cfg.driveId ? `drive_id = ${cfg.driveId}` : '',
         `drive_type = ${cfg.driveType || 'personal'}`,
       ].filter(Boolean).join('\n');
 
@@ -415,6 +434,7 @@
       refreshToken: token.refresh_token || '',
       expiry,
       rcloneConfig: conf,
+      driveId: cfg.driveId || '',
     };
     showOauthStep('oauthStepResult');
     setFlow(5);
@@ -486,7 +506,8 @@
   function handleCallbackParams() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('saved') === 'true') {
-      $('oauthSavedText').textContent = `Đã lưu remote ${params.get('remote') || ''}.`;
+      const action = params.get('action') === 'updated' ? 'cập nhật' : 'lưu';
+      $('oauthSavedText').textContent = `Đã ${action} remote ${params.get('remote') || ''}.`;
       $('oauthSavedBanner').classList.remove('hidden');
       history.replaceState({}, '', location.pathname + location.hash);
       return;

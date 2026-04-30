@@ -3,16 +3,22 @@ services:
     build: .
     container_name: rclone-oauth-manager
     ports:
+      # On a public server, prefer: "127.0.0.1:53682:53682"
+      # and put authentication in front of the app via reverse proxy.
       - "53682:53682"
     env_file:
       - .env
     environment:
       PORT: 53682
       FRONTEND_URL: http://localhost:53682
-    # If you use service account file mode, set:
-    # FIREBASE_SERVICE_ACCOUNT_PATH=/run/secrets/firebase_service_account
-    # in .env and uncomment this volume.
+    # Optional volumes:
+    # - For rclone commands that read/write local files, mount a host folder
+    #   and use the container path (/data/...) in the UI command.
+    # - If you use service account file mode, set
+    #   FIREBASE_SERVICE_ACCOUNT_PATH=/run/secrets/firebase_service_account
+    #   in .env and mount serviceAccount.json.
     # volumes:
+    #   - ./data:/data
     #   - ./serviceAccount.json:/run/secrets/firebase_service_account:ro
     restart: unless-stopped
     healthcheck:

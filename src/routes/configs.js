@@ -1,16 +1,20 @@
 const express = require('express');
 const firebase = require('../services/firebase');
-const { normalizeConfigRecord } = require('../utils/configBuilder');
+const { COLLECTION, upsertByEmailOwner } = require('../services/configStore');
+const { injectOneDriveDriveId, normalizeConfigRecord } = require('../utils/configBuilder');
 const { encryptIfConfigured } = require('../utils/encryption');
 const { refreshAccessToken } = require('../services/tokenRefresh');
 const { fetchQuota, listFiles } = require('../services/cloudApi');
 
 const router = express.Router();
-const COLLECTION = 'rclone_configs';
 
 function publicRecord(record) {
   if (!record) return null;
   const { clientSecret, ...safe } = record;
+  safe.driveId = safe.driveId || safe.drive_id || '';
+  if (safe.provider === 'od' && safe.driveId) {
+    safe.rcloneConfig = injectOneDriveDriveId(safe.rcloneConfig, safe.driveId, safe.driveType);
+  }
   return safe;
 }
 
@@ -29,6 +33,7 @@ function parseManualSave(body) {
     accessToken: body.accessToken,
     refreshToken: body.refreshToken,
     expiry: body.expiry,
+    driveId: body.driveId || body.drive_id || cfg.driveId || cfg.drive_id,
   });
   record.clientSecret = encryptIfConfigured(record.clientSecret);
   return record;
@@ -62,8 +67,8 @@ router.post('/save', async (req, res, next) => {
       return;
     }
 
-    const saved = await firebase.push(COLLECTION, record);
-    res.status(201).json(publicRecord(saved));
+    const saved = await upsertByEmailOwner(record);
+    res.status(saved.action === 'created' ? 201 : 200).json(publicRecord(saved.record));
   } catch (err) {
     next(err);
   }
@@ -139,6 +144,8 @@ router.get('/:id/quota', async (req, res, next) => {
     await firebase.update(path, {
       storageUsed: quota.storageUsed,
       storageTotal: quota.storageTotal,
+      driveId: quota.driveId || record.driveId || record.drive_id || '',
+      rcloneConfig: quota.driveId ? injectOneDriveDriveId(record.rcloneConfig, quota.driveId, record.driveType) : record.rcloneConfig,
       lastChecked: Date.now(),
       status: 'active',
       updatedAt: Date.now(),

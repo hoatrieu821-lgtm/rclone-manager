@@ -31,14 +31,22 @@ async function fetchQuota(record) {
     };
   }
 
-  const data = await fetchJson('https://graph.microsoft.com/v1.0/me/drive', record);
+  const data = await fetchOneDriveDrive(record);
   return {
     provider: 'od',
+    driveId: data.id || '',
     user: data.owner || null,
     storageUsed: data.quota && data.quota.used ? Number(data.quota.used) : 0,
     storageTotal: data.quota && data.quota.total ? Number(data.quota.total) : null,
     raw: data,
   };
+}
+
+async function fetchOneDriveDrive(recordOrToken) {
+  const record = typeof recordOrToken === 'string'
+    ? { accessToken: recordOrToken }
+    : recordOrToken;
+  return fetchJson('https://graph.microsoft.com/v1.0/me/drive', record);
 }
 
 async function listFiles(record, pageToken) {
@@ -77,5 +85,6 @@ async function listFiles(record, pageToken) {
 
 module.exports = {
   fetchQuota,
+  fetchOneDriveDrive,
   listFiles,
 };

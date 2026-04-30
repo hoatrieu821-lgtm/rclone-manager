@@ -6,6 +6,7 @@ const dotenv = require('dotenv');
 const { handleOAuthCallback } = require('./routes/oauth');
 const configsRouter = require('./routes/configs');
 const presetsRouter = require('./routes/presets');
+const rcloneRouter = require('./routes/rclone');
 const firebase = require('./services/firebase');
 
 dotenv.config();
@@ -39,11 +40,14 @@ app.get('/health', async (_req, res) => {
     firebase: status.connected ? 'connected' : 'error',
     firebaseMode: status.mode,
     message: status.message,
+    runnerCommitShortId: process.env._DOTENVRTDB_RUNNER_COMMIT_SHORT_ID || '',
+    runnerCommitAt: process.env._DOTENVRTDB_RUNNER_COMMIT_AT || '',
   });
 });
 
 app.use('/api/configs', configsRouter);
 app.use('/api/presets', presetsRouter);
+app.use('/api/rclone', rcloneRouter);
 app.use('/api', (_req, res) => {
   res.status(404).json({ error: 'API endpoint not found.' });
 });

@@ -14,7 +14,31 @@ function buildTokenJson(token, existingRefreshToken) {
   };
 }
 
-function buildRcloneConfig(cfg, token, existingRefreshToken = '') {
+function normalizeDriveId(cfg, token = {}, options = {}) {
+  return cfg.driveId || cfg.drive_id || token.driveId || token.drive_id || options.driveId || options.drive_id || '';
+}
+
+function injectOneDriveDriveId(rcloneConfig, driveId, driveType = 'personal') {
+  if (!rcloneConfig) return rcloneConfig;
+  const lines = String(rcloneConfig).split(/\r?\n/);
+  const hasDriveId = /^\s*drive_id\s*=/mi.test(rcloneConfig);
+  const hasDriveType = /^\s*drive_type\s*=/mi.test(rcloneConfig);
+  if ((hasDriveId || !driveId) && hasDriveType) return rcloneConfig;
+
+  const driveTypeIndex = lines.findIndex((line) => /^\s*drive_type\s*=/.test(line));
+  if (driveId && !hasDriveId && driveTypeIndex >= 0) {
+    lines.splice(driveTypeIndex, 0, `drive_id = ${driveId}`);
+  } else if (driveId && !hasDriveId) {
+    lines.push(`drive_id = ${driveId}`);
+  }
+
+  if (!hasDriveType) {
+    lines.push(`drive_type = ${driveType || 'personal'}`);
+  }
+  return lines.join('\n');
+}
+
+function buildRcloneConfig(cfg, token, existingRefreshToken = '', options = {}) {
   cfg = sanitizeOAuthConfig(cfg);
   const tokenJson = buildTokenJson(token, existingRefreshToken);
   const tokenText = JSON.stringify(tokenJson);
@@ -41,6 +65,8 @@ function buildRcloneConfig(cfg, token, existingRefreshToken = '') {
   ];
   if (cfg.clientSecret) lines.push(`client_secret = ${cfg.clientSecret}`);
   lines.push(`token = ${tokenText}`);
+  const driveId = normalizeDriveId(cfg, token, options);
+  if (driveId) lines.push(`drive_id = ${driveId}`);
   lines.push(`drive_type = ${cfg.driveType || 'personal'}`);
 
   return {
@@ -52,23 +78,25 @@ function buildRcloneConfig(cfg, token, existingRefreshToken = '') {
 
 function normalizeConfigRecord(cfg, token, options = {}) {
   cfg = sanitizeOAuthConfig(cfg);
+  const driveId = cfg.provider === 'od' ? normalizeDriveId(cfg, token, options) : '';
   const built = options.rcloneConfig
     ? {
       expiry: options.expiry || token.expiry || toExpiry(token.expires_in),
       refreshToken: token.refresh_token || options.refreshToken || '',
-      rcloneConfig: options.rcloneConfig,
+      rcloneConfig: cfg.provider === 'od' ? injectOneDriveDriveId(options.rcloneConfig, driveId) : options.rcloneConfig,
     }
-    : buildRcloneConfig(cfg, token, options.refreshToken);
+    : buildRcloneConfig(cfg, token, options.refreshToken, { driveId });
 
   const now = Date.now();
   return {
     remoteName: cfg.remoteName || 'myremote',
     provider: cfg.provider,
-    emailOwner: cfg.emailOwner || '',
+    emailOwner: cfg.emailOwner || cfg.email_owner || '',
     clientId: cfg.clientId || '',
     clientSecret: cfg.clientSecret || '',
     scope: cfg.provider === 'gd' ? (cfg.scope || 'drive') : '',
     driveType: cfg.provider === 'od' ? (cfg.driveType || 'personal') : '',
+    driveId,
     accessToken: token.access_token || options.accessToken || '',
     refreshToken: built.refreshToken,
     expiry: built.expiry,
@@ -84,5 +112,6 @@ function normalizeConfigRecord(cfg, token, options = {}) {
 
 module.exports = {
   buildRcloneConfig,
+  injectOneDriveDriveId,
   normalizeConfigRecord,
 };

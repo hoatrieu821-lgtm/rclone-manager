@@ -1,5 +1,5 @@
 (function () {
-  const ROUTES = ['oauth', 'credentials', 'configs', 'manager', 'settings'];
+  const ROUTES = ['oauth', 'credentials', 'configs', 'manager', 'rclone', 'settings'];
 
   function $(id) {
     return document.getElementById(id);
@@ -34,6 +34,17 @@
     if (route === 'credentials') window.App.Credentials?.loadPresets();
     if (route === 'configs') window.App.Configs?.loadConfigs();
     if (route === 'manager') window.App.Manager?.refreshOptions();
+    if (route === 'rclone') {
+      window.App.RcloneCommands?.refreshOptions();
+      window.App.RcloneCommands?.loadSavedCommands();
+    }
+  }
+
+  function runnerText(backend) {
+    const parts = [];
+    if (backend.runnerCommitShortId) parts.push(`commit ${backend.runnerCommitShortId}`);
+    if (backend.runnerCommitAt) parts.push(backend.runnerCommitAt);
+    return parts.length ? ` · ${parts.join(' · ')}` : '';
   }
 
   function updateBackendStatusUi() {
@@ -42,19 +53,23 @@
     const footer = $('footerStatus');
     const settingsStatus = $('settingsBackendStatus');
     const settingsVersion = $('settingsVersion');
+    const settingsRunnerCommit = $('settingsRunnerCommit');
+    const settingsRunnerCommitAt = $('settingsRunnerCommitAt');
     const settingsUrl = $('settingsBackendUrl');
 
     if (badge) {
       badge.className = `badge ${backend.online ? 'badge--green' : 'badge--red'}`;
-      badge.textContent = backend.online ? `Backend ok · Firebase ${backend.firebase}` : 'Backend offline';
+      badge.textContent = backend.online ? `Backend ok${runnerText(backend)} · Firebase ${backend.firebase}` : 'Backend offline';
     }
     if (footer) {
       footer.textContent = backend.online
-        ? `Backend ${backend.version} · Firebase ${backend.firebase} (${backend.mode})`
+        ? `Backend ${backend.version}${runnerText(backend)} · Firebase ${backend.firebase} (${backend.mode})`
         : 'Backend offline';
     }
     if (settingsStatus) settingsStatus.textContent = backend.online ? `ok · Firebase ${backend.firebase}` : 'offline';
     if (settingsVersion) settingsVersion.textContent = backend.version || '-';
+    if (settingsRunnerCommit) settingsRunnerCommit.textContent = backend.runnerCommitShortId || '-';
+    if (settingsRunnerCommitAt) settingsRunnerCommitAt.textContent = backend.runnerCommitAt || '-';
     if (settingsUrl) settingsUrl.textContent = window.App.api.baseUrl;
     window.App.OAuth?.setBackendBanner();
   }
@@ -92,7 +107,7 @@
   function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js?v=20260430-3').catch(() => {});
+        navigator.serviceWorker.register('/sw.js?v=20260430-5').catch(() => {});
       });
     }
   }
@@ -104,6 +119,7 @@
     window.App.Credentials?.init();
     window.App.Configs?.init();
     window.App.Manager?.init();
+    window.App.RcloneCommands?.init();
     bindSettings();
     registerServiceWorker();
 
@@ -111,6 +127,8 @@
     await window.App.Credentials?.loadPresets();
     await window.App.Configs?.loadConfigs();
     await window.App.Manager?.refreshOptions();
+    await window.App.RcloneCommands?.refreshOptions();
+    await window.App.RcloneCommands?.loadSavedCommands();
     setActiveRoute(routeFromHash());
   }
 

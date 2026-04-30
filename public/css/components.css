@@ -206,6 +206,10 @@
   line-height: var(--line-height-relaxed);
 }
 
+.textarea--mono {
+  font-family: var(--font-family-mono);
+}
+
 .input::placeholder,
 .textarea::placeholder {
   color: var(--color-text-tertiary);
@@ -452,6 +456,15 @@
   white-space: pre-wrap;
   overflow-x: auto;
   line-height: var(--line-height-relaxed);
+}
+
+.codeout--muted {
+  color: var(--color-text-secondary);
+}
+
+.rclone-checkbox {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
 }
 
 .guide-list {

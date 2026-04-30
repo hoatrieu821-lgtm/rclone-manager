@@ -1,6 +1,7 @@
-const firebase = require('../services/firebase');
 const { parseStateParam } = require('../utils/stateParser');
 const { exchangeOAuthCode } = require('../services/tokenExchange');
+const { upsertByEmailOwner } = require('../services/configStore');
+const { fetchOneDriveDrive } = require('../services/cloudApi');
 const { normalizeConfigRecord } = require('../utils/configBuilder');
 const { encryptIfConfigured } = require('../utils/encryption');
 
@@ -21,13 +22,18 @@ async function handleOAuthCallback(req, res) {
   try {
     const cfg = parseStateParam(req.query.state);
     const token = await exchangeOAuthCode(cfg, req.query.code);
+    if (cfg.provider === 'od' && token.access_token) {
+      const drive = await fetchOneDriveDrive(token.access_token);
+      cfg.driveId = drive.id || '';
+    }
     const record = normalizeConfigRecord(cfg, token);
     record.clientSecret = encryptIfConfigured(record.clientSecret);
-    const saved = await firebase.push('rclone_configs', record);
+    const saved = await upsertByEmailOwner(record);
 
     res.redirect(frontendRedirect({
       saved: 'true',
-      remote: saved.remoteName,
+      remote: saved.record.remoteName,
+      action: saved.action,
     }));
   } catch (err) {
     res.redirect(frontendRedirect({ error: err.message }));

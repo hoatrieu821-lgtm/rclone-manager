@@ -3,9 +3,17 @@
 
   window.App = window.App || {};
   window.App.state = {
-    backend: { online: false, firebase: 'unknown', version: '1.0.0', mode: 'unknown' },
+    backend: {
+      online: false,
+      firebase: 'unknown',
+      version: '1.0.0',
+      mode: 'unknown',
+      runnerCommitShortId: '',
+      runnerCommitAt: '',
+    },
     presets: [],
     configs: [],
+    savedRcloneCommands: [],
     selectedConfigIds: new Set(),
     currentConfigPage: 0,
     configPageSize: 20,
@@ -43,6 +51,8 @@
         version: data.version || '1.0.0',
         mode: data.firebaseMode || 'unknown',
         message: data.message || '',
+        runnerCommitShortId: data.runnerCommitShortId || '',
+        runnerCommitAt: data.runnerCommitAt || '',
       };
       return window.App.state.backend;
     } catch (err) {
@@ -52,6 +62,8 @@
         version: '1.0.0',
         mode: 'offline',
         message: err.message,
+        runnerCommitShortId: '',
+        runnerCommitAt: '',
       };
       return window.App.state.backend;
     } finally {

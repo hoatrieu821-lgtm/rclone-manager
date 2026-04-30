@@ -2,6 +2,8 @@ FROM node:20-alpine
 
 WORKDIR /app
 
+RUN apk add --no-cache rclone
+
 COPY package*.json ./
 # This app only uses Firebase Realtime Database, so skip firebase-admin's
 # optional Firestore/Storage dependencies in the production image.
